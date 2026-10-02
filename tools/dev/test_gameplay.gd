@@ -112,6 +112,46 @@ func _ready() -> void:
 	s173.global_position = map.cell_center(Vector2i(4, 2), 0.02)
 	player.rotation.y = 0.0
 
+	# --- ADS
+	player.revolver.aiming = true
+	Input.action_press("aim")
+	await frames(40)
+	check("ADS engages", player.revolver.ads > 0.95, "ads=%.2f fov=%.1f" % [player.revolver.ads, player.camera.fov])
+	check("ADS zooms FOV", player.camera.fov < Settings.f("fov") * 0.8)
+	Input.action_release("aim")
+	await frames(40)
+	check("ADS releases", player.revolver.ads < 0.05)
+
+	# --- cheats
+	Settings.cheats["inf_ammo"] = true
+	var m0 := player.revolver.mag
+	player.revolver.set("_cool", 0.0)
+	player.revolver.try_fire(player.camera, false)
+	check("infinite ammo", player.revolver.mag == m0)
+	Settings.cheats["inf_ammo"] = false
+	Settings.cheats["inf_stamina"] = true
+	player.stamina = 5.0
+	await frames(2)
+	check("infinite stamina", player.stamina >= 99.0)
+	Settings.cheats["inf_stamina"] = false
+	Settings.cheats["god"] = true
+	var hp_before := player.health
+	player.damage(50.0, "0492")
+	player.die("173")
+	check("god mode blocks damage/death", player.alive and player.health == hp_before)
+	freeze_all(s173)
+	s173.global_position = player.global_position + Vector3(0, 0, 0.8)
+	player.rotation.y = 0.0
+	await frames(20)
+	check("173 cannot kill in god mode", player.alive)
+	s173.set_physics_process(false)
+	s173.global_position = map.cell_center(Vector2i(4, 2), 0.02)
+	Settings.cheats["god"] = false
+	Settings.cheats["esp_173"] = true
+	await frames(2)
+	check("esp overlay exists", (g.get("hud") as HUD).esp != null)
+	Settings.cheats["esp_173"] = false
+
 	# --- collect all code fragments
 	var notes := 0
 	for n in g.get_children():

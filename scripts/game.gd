@@ -380,7 +380,7 @@ func toggle_pause() -> void:
 		return
 	if get_tree().paused:
 		for c in hud.root.get_children():
-			if c is SettingsMenu or c is HowToPlay:
+			if c is SettingsMenu or c is HowToPlay or c is CheatsMenu:
 				c.queue_free()
 		get_tree().paused = false
 		hud.close_dialog()

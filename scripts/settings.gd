@@ -34,6 +34,9 @@ const DEFAULTS := {
 }
 
 var values: Dictionary = {}
+## Cheats (persisted). ESP per SCP + godmode / infinite ammo / stamina / battery / no blink.
+const CHEAT_KEYS := ["esp_173", "esp_096", "esp_049", "esp_0492", "god", "inf_ammo", "inf_stamina", "inf_battery", "no_blink"]
+var cheats: Dictionary = {}
 var difficulty: int = 1 # chosen per new game: 0 easy, 1 normal, 2 hard
 var best_time: float = -1.0
 
@@ -75,6 +78,8 @@ func load_settings() -> void:
 		for k: String in DEFAULTS.keys():
 			values[k] = cfg.get_value("settings", k, DEFAULTS[k])
 		best_time = float(cfg.get_value("stats", "best_time", -1.0))
+		for k: String in CHEAT_KEYS:
+			cheats[k] = bool(cfg.get_value("cheats", k, false))
 		difficulty = int(cfg.get_value("stats", "last_difficulty", 1))
 
 func save_settings() -> void:
@@ -82,8 +87,24 @@ func save_settings() -> void:
 	for k: String in values.keys():
 		cfg.set_value("settings", k, values[k])
 	cfg.set_value("stats", "best_time", best_time)
+	for k: String in cheats.keys():
+		cfg.set_value("cheats", k, cheats[k])
 	cfg.set_value("stats", "last_difficulty", difficulty)
 	cfg.save(PATH)
+
+func cheat(key: String) -> bool:
+	return bool(cheats.get(key, false))
+
+func set_cheat(key: String, on: bool) -> void:
+	cheats[key] = on
+	save_settings()
+	changed.emit()
+
+func any_cheat() -> bool:
+	for k: String in cheats.keys():
+		if bool(cheats[k]):
+			return true
+	return false
 
 func use_touch() -> bool:
 	match i("touch_controls"):
@@ -135,6 +156,8 @@ func _setup_input() -> void:
 		"blink": [KEY_SPACE],
 		"pause": [KEY_ESCAPE, KEY_P],
 		"map": [KEY_M, KEY_TAB],
+		"aim": [KEY_Q],
+		"cheats": [KEY_F1],
 	}
 	for action: String in keys.keys():
 		if not InputMap.has_action(action):
@@ -143,11 +166,20 @@ func _setup_input() -> void:
 			var ev := InputEventKey.new()
 			ev.physical_keycode = k as Key
 			InputMap.action_add_event(action, ev)
-	if not InputMap.has_action("fire"):
-		InputMap.add_action("fire")
+	for pair: Array in [["fire", MOUSE_BUTTON_LEFT], ["aim", MOUSE_BUTTON_RIGHT]]:
+		if not InputMap.has_action(pair[0]):
+			InputMap.add_action(pair[0])
 		var mb := InputEventMouseButton.new()
-		mb.button_index = MOUSE_BUTTON_LEFT
-		InputMap.action_add_event("fire", mb)
+		mb.button_index = pair[1]
+		InputMap.action_add_event(pair[0], mb)
+	var lt := InputEventJoypadMotion.new()
+	lt.axis = JOY_AXIS_TRIGGER_LEFT
+	lt.axis_value = 1.0
+	InputMap.action_add_event("aim", lt)
+	var rt := InputEventJoypadMotion.new()
+	rt.axis = JOY_AXIS_TRIGGER_RIGHT
+	rt.axis_value = 1.0
+	InputMap.action_add_event("fire", rt)
 	# gamepad
 	var pad := {
 		"fire": JOY_BUTTON_RIGHT_SHOULDER, "interact": JOY_BUTTON_A, "reload": JOY_BUTTON_X,

@@ -24,7 +24,7 @@ var _sprint_toggle := false
 var _font: Font
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_font = ThemeDB.fallback_font
 	_layout()
@@ -51,9 +51,10 @@ func _layout() -> void:
 	var items := [
 		["fire", "FIRE", Vector2(s.x - 150 * k, s.y - 150 * k), base * 1.45],
 		["reload", "RELOAD", Vector2(s.x - 300 * k, s.y - 95 * k), base * 0.85],
-		["use", "USE", Vector2(s.x - 315 * k, s.y - 235 * k), base * 0.95],
-		["light", "LIGHT", Vector2(s.x - 95 * k, s.y - 330 * k), base * 0.8],
-		["blink", "BLINK", Vector2(s.x - 235 * k, s.y - 380 * k), base * 0.75],
+		["use", "USE", Vector2(s.x - 330 * k, s.y - 250 * k), base * 0.95],
+		["aim", "AIM", Vector2(s.x - 135 * k, s.y - 330 * k), base * 0.85],
+		["light", "LIGHT", Vector2(s.x - 70 * k, s.y - 470 * k), base * 0.7],
+		["blink", "BLINK", Vector2(s.x - 270 * k, s.y - 400 * k), base * 0.72],
 		["crouch", "CROUCH", Vector2(s.x - 420 * k, s.y - 90 * k), base * 0.75],
 		["sprint", "RUN", Vector2(330 * k, s.y - 90 * k), base * 0.8],
 		["pause", "II", Vector2(s.x - 60, 60), 38.0],
@@ -149,6 +150,9 @@ func _press(b: TButton) -> void:
 			player.toggle_flashlight()
 		"blink":
 			player.blink()
+		"aim":
+			player.touch_aim = not player.touch_aim
+			b.toggled = player.touch_aim
 		"crouch":
 			player.toggle_crouch()
 			b.toggled = player.crouching
@@ -174,6 +178,10 @@ func _process(_delta: float) -> void:
 		if has != use.visible:
 			use.visible = has
 			queue_redraw()
+	var am := _btn("aim")
+	if am and am.toggled != player.touch_aim:
+		am.toggled = player.touch_aim
+		queue_redraw()
 	var cr := _btn("crouch")
 	if cr and cr.toggled != player.crouching:
 		cr.toggled = player.crouching

@@ -43,10 +43,22 @@ func _ready() -> void:
 		if p.size() > 3:
 			player.head.rotation.x = deg_to_rad(float(p[3]))
 			player.set("_pitch", deg_to_rad(float(p[3])))
+		var flags: String = p[4] if p.size() > 4 else ""
+		player.revolver.aiming = flags.contains("a")
+		player.touch_aim = flags.contains("a")
+		for k: String in Settings.CHEAT_KEYS:
+			Settings.cheats[k] = flags.contains("e") and k.begins_with("esp")
 		player.blink_meter = 100.0
 		print("TELEPORT ", s, " t=", Time.get_ticks_msec())
 		for n in int(args.get("settle", "20")):
 			await get_tree().process_frame
+		if flags.contains("f"):
+			player.revolver.set("_cool", 0.0)
+			Engine.time_scale = 0.05
+			player.revolver.try_fire(player.camera, false)
+			for n in 2:
+				await get_tree().process_frame
+			Engine.time_scale = 1.0
 		await RenderingServer.frame_post_draw
 		get_viewport().get_texture().get_image().save_png("%s_%02d.png" % [args.get("out", "/root/work/shots/g"), i])
 		print("SHOT ", i, " ", s, " fps ", Engine.get_frames_per_second(), " alive ", player.alive)
