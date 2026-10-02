@@ -1,0 +1,111 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  GODOT_VERSION: "4.7.2"
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Cache Godot editor + export templates
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot
+            ~/.local/share/godot/export_templates
+          key: godot-${{ env.GODOT_VERSION }}-android-v1
+
+      - name: Download Godot ${{ env.GODOT_VERSION }}
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          set -e
+          mkdir -p ~/godot ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          cd ~/godot
+          curl -sSfL -o editor.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q editor.zip && rm editor.zip
+          mv Godot_v${GODOT_VERSION}-stable_linux.x86_64 godot
+          curl -sSfL -o templates.tpz "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+          # only the Android templates are needed
+          unzip -q -j templates.tpz "templates/android_*" "templates/version.txt" -d ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/
+          rm templates.tpz
+          ls -la ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/
+
+      - name: Configure Godot editor settings (Android SDK / JDK)
+        run: |
+          set -e
+          mkdir -p ~/.config/godot
+          SDK="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          echo "Android SDK: $SDK  JDK: $JAVA_HOME"
+          ls "$SDK/build-tools" || true
+          cat > ~/.config/godot/editor_settings-4.7.tres <<EOF
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/android_sdk_path = "$SDK"
+          export/android/java_sdk_path = "$JAVA_HOME"
+          EOF
+          sed -i 's/^ *//' ~/.config/godot/editor_settings-4.7.tres
+          cat ~/.config/godot/editor_settings-4.7.tres
+
+      - name: Prepare signing keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.ANDROID_KEYSTORE_ALIAS }}
+        run: |
+          set -e
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > $RUNNER_TEMP/release.keystore
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=$KEYSTORE_PASS" >> $GITHUB_ENV
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_USER=$KEYSTORE_ALIAS" >> $GITHUB_ENV
+          else
+            echo "::warning::ANDROID_KEYSTORE_BASE64 secret not set - using the bundled build keystore (android/build.keystore)."
+            cp android/build.keystore $RUNNER_TEMP/release.keystore
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=scplockdown" >> $GITHUB_ENV
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_USER=scplockdown" >> $GITHUB_ENV
+          fi
+          echo "GODOT_ANDROID_KEYSTORE_RELEASE_PATH=$RUNNER_TEMP/release.keystore" >> $GITHUB_ENV
+
+      - name: Import project
+        run: |
+          ~/godot/godot --headless --path . --import 2>&1 | tee import.log | tail -n 20
+          if grep -E "SCRIPT ERROR|Parse Error" import.log; then echo "::error::Script errors during import"; exit 1; fi
+
+      - name: Export APK
+        run: |
+          mkdir -p build
+          ~/godot/godot --headless --path . --export-release "Android" build/SCP-Lockdown.apk 2>&1 | tee export.log | tail -n 40
+          test -f build/SCP-Lockdown.apk
+          ls -la build/
+
+      - name: Verify APK (target SDK / signature)
+        run: |
+          set -e
+          SDK="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          BT=$(ls -d $SDK/build-tools/* | sort -V | tail -n 1)
+          $BT/aapt2 dump badging build/SCP-Lockdown.apk | grep -E "package:|sdkVersion|targetSdkVersion|native-code" || true
+          $BT/apksigner verify --print-certs build/SCP-Lockdown.apk | head -n 5
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SCP-Lockdown-apk
+          path: build/SCP-Lockdown.apk
+          if-no-files-found: error

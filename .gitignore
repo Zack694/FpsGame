@@ -1,0 +1,11 @@
+# Godot
+.godot/
+*.import.tmp
+/build/
+export.log
+import.log
+*.apk
+*.aab
+# OS
+.DS_Store
+Thumbs.db
