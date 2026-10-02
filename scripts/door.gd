@@ -12,6 +12,7 @@ var bash_time := 0.0
 
 var _panels: Array[Node3D] = []
 var _closed_x: Array[float] = []
+var _slide_dir: Array[float] = []
 var _blocker: CollisionShape3D
 var _open_w := 1.5
 var _auto_close := 0.0
@@ -42,24 +43,23 @@ func _ready() -> void:
 		for s: float in [-1.0, 1.0]:
 			_deco(Vector3(s * (_open_w * 0.5 + 0.05), open_h * 0.5, z), Vector3(0.1, open_h, 0.03), trim)
 		_deco(Vector3(0, open_h + 0.05, z), Vector3(_open_w + 0.2, 0.1, 0.03), trim)
-	# panels
-	var paths := [P + "ContDoorLeft.glb", P + "ContDoorRight.glb"] if heavy else [P + "Door01.glb", P + "Door01.glb"]
-	var pw := _open_w * 0.5
-	for i in 2:
-		var side := -1.0 if i == 0 else 1.0
+	# panels: heavy containment doors split in the middle, normal doors are one sliding slab
+	var paths: Array = [P + "ContDoorLeft.glb", P + "ContDoorRight.glb"] if heavy else [P + "Door01.glb"]
+	var pw := _open_w * 0.5 if heavy else _open_w
+	for i in paths.size():
+		var side := -1.0 if (heavy and i == 0) else 1.0
 		var holder := Node3D.new()
 		var m: Node3D = (load(paths[i]) as PackedScene).instantiate()
 		holder.add_child(m)
 		var bb := MapBuilder.node_aabb(holder)
 		m.scale = Vector3(pw / bb.size.x, open_h / bb.size.y, 0.14 / maxf(bb.size.z, 0.001))
 		m.position = -Vector3(bb.get_center().x * m.scale.x, bb.position.y * m.scale.y, bb.get_center().z * m.scale.z)
-		if not heavy and i == 1:
-			holder.rotation.y = PI
 		add_child(holder)
-		var cx := side * pw * 0.5
+		var cx := side * pw * 0.5 if heavy else 0.0
 		holder.position = Vector3(cx, 0, 0)
 		_panels.append(holder)
 		_closed_x.append(cx)
+		_slide_dir.append(side)
 	# blocker collision while closed
 	var bbody := StaticBody3D.new()
 	bbody.collision_layer = 1
@@ -172,9 +172,9 @@ func _physics_process(delta: float) -> void:
 	var target := 1.0 if is_open else 0.0
 	if progress != target:
 		progress = move_toward(progress, target, delta * _speed)
+		var travel := (_open_w * 0.5 if heavy else _open_w) + 0.02
 		for i in _panels.size():
-			var side := -1.0 if i == 0 else 1.0
-			_panels[i].position.x = _closed_x[i] + side * progress * (_open_w * 0.5 + 0.02)
+			_panels[i].position.x = _closed_x[i] + _slide_dir[i] * progress * travel
 	_blocker.disabled = progress > 0.6
 	if _auto_close > 0.0 and is_open:
 		_auto_close -= delta

@@ -25,18 +25,20 @@ var _keypad_display: Label
 var _keypad_text := ""
 var _msg_t := 0.0
 var minimap: Minimap
+var esp: ESP
+var _cheat_lbl: Label
 var touch: TouchControls
 
 func _ready() -> void:
 	layer = 5
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	root = Control.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.theme = UIKit.theme()
 	add_child(root)
 	_vignette = ColorRect.new()
-	_vignette.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_vignette.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var sh := Shader.new()
 	sh.code = """shader_type canvas_item;
@@ -94,6 +96,18 @@ void fragment() {
 	_msg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_countdown = UIKit.label("", 40, Color(1, 0.2, 0.15), HORIZONTAL_ALIGNMENT_CENTER)
 	_center_label(_countdown, -260)
+	esp = ESP.new()
+	root.add_child(esp)
+	_cheat_lbl = UIKit.label("", 15, Color(1, 0.8, 0.3))
+	_cheat_lbl.anchor_top = 1.0
+	_cheat_lbl.anchor_bottom = 1.0
+	_cheat_lbl.anchor_left = 0.5
+	_cheat_lbl.anchor_right = 0.5
+	_cheat_lbl.offset_left = -300
+	_cheat_lbl.offset_right = 300
+	_cheat_lbl.offset_top = -30
+	_cheat_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	root.add_child(_cheat_lbl)
 	touch = TouchControls.new()
 	root.add_child(touch)
 	minimap = Minimap.new()
@@ -106,6 +120,7 @@ func setup(g: Node, p: Player) -> void:
 	game = g
 	player = p
 	touch.player = p
+	esp.player = p
 	touch.game = g
 	touch.visible = Settings.use_touch()
 	minimap.map = g.get("map")
@@ -116,7 +131,7 @@ func setup(g: Node, p: Player) -> void:
 func _full_rect(c: Color) -> ColorRect:
 	var r := ColorRect.new()
 	r.color = c
-	r.set_anchors_preset(Control.PRESET_FULL_RECT)
+	r.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(r)
 	return r
@@ -160,6 +175,14 @@ func _process(delta: float) -> void:
 	if player == null:
 		return
 	_crosshair.queue_redraw()
+	_crosshair.modulate.a = 1.0 - clampf(player.revolver.ads * 1.6, 0.0, 1.0)
+	var act: PackedStringArray = []
+	for k: String in ["god", "inf_ammo", "inf_stamina", "inf_battery", "no_blink"]:
+		if Settings.cheat(k):
+			act.append({"god": "GOD", "inf_ammo": "INF AMMO", "inf_stamina": "INF STAMINA", "inf_battery": "INF BATTERY", "no_blink": "NO BLINK"}[k])
+	if Settings.cheat("esp_173") or Settings.cheat("esp_096") or Settings.cheat("esp_049") or Settings.cheat("esp_0492"):
+		act.append("ESP")
+	_cheat_lbl.text = ("CHEATS: " + " | ".join(act)) if act.size() > 0 else ""
 	_set_bar("health", player.health)
 	_set_bar("stamina", player.stamina)
 	_set_bar("blink", player.blink_meter)
@@ -198,6 +221,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("map"):
 		game.call("toggle_map")
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("cheats"):
+		if not get_tree().paused:
+			game.call("toggle_pause")
+		root.add_child(CheatsMenu.new())
 		get_viewport().set_input_as_handled()
 
 func damage_flash(amount: float) -> void:
@@ -318,7 +346,7 @@ func _keypad_press(k: String) -> void:
 # ------------------------------------------------------------- pause
 func show_pause() -> void:
 	_open_dialog(0.7)
-	var p := UIKit.center_panel(_dialog, Vector2(460, 520))
+	var p := UIKit.center_panel(_dialog, Vector2(460, 600))
 	var v := VBoxContainer.new()
 	v.alignment = BoxContainer.ALIGNMENT_CENTER
 	p.add_child(v)
@@ -328,6 +356,7 @@ func show_pause() -> void:
 	v.add_child(UIKit.button("SETTINGS", func() -> void:
 		var sm := SettingsMenu.new()
 		root.add_child(sm)))
+	v.add_child(UIKit.button("CHEATS", func() -> void: root.add_child(CheatsMenu.new())))
 	v.add_child(UIKit.button("HOW TO PLAY", func() -> void:
 		var hp := HowToPlay.new()
 		root.add_child(hp)))

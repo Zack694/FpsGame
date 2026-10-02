@@ -100,7 +100,7 @@ static func center_panel(parent: Control, size: Vector2) -> PanelContainer:
 static func dim_layer(parent: Node, alpha: float = 0.7) -> ColorRect:
 	var r := ColorRect.new()
 	r.color = Color(0, 0, 0, alpha)
-	r.set_anchors_preset(Control.PRESET_FULL_RECT)
+	r.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	r.mouse_filter = Control.MOUSE_FILTER_STOP
 	r.theme = theme()
 	parent.add_child(r)

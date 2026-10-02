@@ -25,6 +25,7 @@ var blink_period := 9.0
 # touch input (set by TouchControls)
 var touch_move := Vector2.ZERO
 var touch_sprint := false
+var touch_aim := false
 var _look_accum := Vector2.ZERO
 var _fire_held := false
 
@@ -116,6 +117,7 @@ func _on_settings() -> void:
 # ------------------------------------------------------------------ input
 func add_look(rel: Vector2, touch: bool) -> void:
 	var sens := (0.0042 * Settings.f("look_sensitivity")) if touch else (0.0022 * Settings.f("mouse_sensitivity"))
+	sens *= lerpf(1.0, 0.55, revolver.ads) # finer aim while aiming down sights
 	_look_accum += rel * sens
 
 func set_fire_held(v: bool) -> void:
@@ -192,8 +194,12 @@ func can_see_point(p: Vector3, max_dist: float = 45.0) -> bool:
 		return false
 	return bool(game.call("has_los", e, p))
 
+## False while godmode is on (NPCs check this before playing kill animations / sounds).
+func can_be_killed() -> bool:
+	return alive and not Settings.cheat("god")
+
 func damage(amount: float, cause: String) -> void:
-	if not alive:
+	if not alive or Settings.cheat("god"):
 		return
 	var mult := [0.6, 1.0, 1.4][Settings.difficulty] as float
 	health -= amount * mult
@@ -207,7 +213,7 @@ func heal(amount: float) -> void:
 	health = minf(100.0, health + amount)
 
 func die(cause: String) -> void:
-	if not alive:
+	if not alive or Settings.cheat("god"):
 		return
 	alive = false
 	health = 0.0
@@ -246,7 +252,9 @@ func _physics_process(delta: float) -> void:
 	mv = mv.limit_length(1.0)
 	var want_sprint := (Input.is_action_pressed("sprint") or touch_sprint) and mv.y < -0.3 and not crouching
 	var sprinting := want_sprint and not _stamina_lock and stamina > 0.0
+	revolver.aiming = (Input.is_action_pressed("aim") or touch_aim) and not sprinting
 	var speed := CROUCH_SPEED if crouching else (SPRINT if sprinting else WALK)
+	speed *= lerpf(1.0, 0.6, revolver.ads)
 	var dir := (global_transform.basis * Vector3(mv.x, 0, mv.y))
 	dir.y = 0
 	var target := dir * speed
@@ -273,6 +281,9 @@ func _physics_process(delta: float) -> void:
 			stamina = minf(100.0, stamina + 13.0 * delta)
 	if _stamina_lock and stamina > 30.0:
 		_stamina_lock = false
+	if Settings.cheat("inf_stamina"):
+		stamina = 100.0
+		_stamina_lock = false
 	# crouch height
 	var eye_target := EYE_CROUCH if crouching else EYE
 	var bob := 0.0
@@ -294,9 +305,11 @@ func _physics_process(delta: float) -> void:
 				Sfx.play(Sfx.pick(["step_step1", "step_step2", "step_step3", "step_step4"]), -10.0, randf_range(0.95, 1.05))
 				game.call("make_noise", global_position, 4.5)
 	# blinking
+	if Settings.cheat("no_blink"):
+		blink_meter = 100.0
 	if blink_time > 0.0:
 		blink_time -= delta
-	else:
+	elif not Settings.cheat("no_blink"):
 		blink_meter -= 100.0 / blink_period * delta
 		if blink_meter <= 0.0:
 			blink()
@@ -306,6 +319,8 @@ func _physics_process(delta: float) -> void:
 		battery = maxf(0.0, battery - drain * delta)
 		if battery <= 0.0:
 			flashlight_on = false
+	if Settings.cheat("inf_battery"):
+		battery = 100.0
 	var fl_energy := 3.2
 	if battery < 15.0:
 		_low_batt_flicker -= delta
@@ -315,10 +330,12 @@ func _physics_process(delta: float) -> void:
 	flashlight.visible = flashlight_on
 	flashlight.light_energy = fl_energy
 	# weapon
+	revolver.infinite_ammo = Settings.cheat("inf_ammo")
+	camera.fov = Settings.f("fov") * lerpf(1.0, 0.7, revolver.ads)
 	if (Input.is_action_pressed("fire") and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED) or _fire_held:
 		if revolver.can_fire():
 			revolver.try_fire(camera, Settings.b("aim_assist") and Settings.use_touch())
-			_pitch = minf(_pitch + 0.035, deg_to_rad(85))
+			_pitch = minf(_pitch + lerpf(0.035, 0.02, revolver.ads), deg_to_rad(85))
 			game.call("make_noise", global_position, 30.0)
 	revolver.update_view(delta, hspeed, sprinting, wall_ray.is_colliding(), _last_look)
 	# camera shake

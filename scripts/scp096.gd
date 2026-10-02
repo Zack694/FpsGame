@@ -12,7 +12,7 @@ var _cry: AudioStreamPlayer3D
 var _speed := 7.6
 
 func _ready() -> void:
-	setup(get_tree().get_first_node_in_group("game"), "res://assets/models/npc/scp096.glb", 0.42, 2.3)
+	setup(get_tree().get_first_node_in_group("game"), "res://assets/models/npc/scp096.glb", 0.4, 2.1)
 	_speed = [6.6, 7.6, 8.6][Settings.difficulty] as float
 	home = global_position
 	home_yaw = rotation.y
@@ -22,7 +22,7 @@ func _ready() -> void:
 	_t = randf_range(60.0, 120.0)
 
 func face_visible() -> bool:
-	var face_p := global_position + Vector3(0, 1.75 if state == S.SIT else 2.15, 0) + (-global_transform.basis.z) * 0.25
+	var face_p := global_position + Vector3(0, 0.8 if state == S.SIT else 2.0, 0) + (-global_transform.basis.z) * 0.25
 	if not player.can_see_point(face_p, 30.0):
 		return false
 	var to_player := flat_dir_to(player.global_position)
@@ -79,11 +79,11 @@ func _physics_process(delta: float) -> void:
 			navigate(delta, _speed, 1, 10.0)
 			_chase_t += delta
 			var d := dist_to_player()
-			if d < 1.5:
+			if d < 1.5 and player.can_be_killed():
 				Sfx.play("scp_096_scream", 6.0)
 				player.die("096")
 				return
-			if bool(game.call("has_los", global_position + Vector3(0, 1.8, 0), player.eye_position())):
+			if bool(game.call("has_los", global_position + Vector3(0, 1.7, 0), player.eye_position())):
 				_lost_t = 0.0
 			else:
 				_lost_t += delta
