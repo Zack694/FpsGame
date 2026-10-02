@@ -13,7 +13,7 @@ var _spawn_cd := 0.0
 var _chase_speed := 2.9
 
 func _ready() -> void:
-	setup(get_tree().get_first_node_in_group("game"), "res://assets/models/npc/scp049.glb", 0.36, 1.95)
+	setup(get_tree().get_first_node_in_group("game"), "res://assets/models/npc/scp049.glb", 0.34, 1.85)
 	add_to_group("shootable")
 	_chase_speed = [2.4, 2.9, 3.4][Settings.difficulty] as float
 	_spawn_cd = randf_range(90.0, 150.0)
@@ -65,7 +65,7 @@ func _physics_process(delta: float) -> void:
 			set_goal(_last_seen if _lost > 0.0 else player.global_position)
 			navigate(delta, _chase_speed, 0, 8.0)
 			_steps(delta, 0.5)
-			if dist_to_player() < 1.3:
+			if dist_to_player() < 1.3 and player.can_be_killed():
 				Sfx.play_at("scp_049_kidnap1", global_position + Vector3(0, 1.6, 0), 4.0, 20.0)
 				player.die("049")
 				return

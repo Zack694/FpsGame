@@ -19,14 +19,17 @@ A containment breach has occurred. Find the [color=#ff6a5a]4 Alpha Warhead code 
 - Use the MAP to find your way.
 
 [b]CONTROLS (touch)[/b]
-Left side: move (push the stick to the edge to sprint) - Right side: look - FIRE (drag it to aim) - RELOAD - USE - LIGHT - BLINK - CROUCH - RUN - MAP - II pause.
+Left side: move (push the stick to the edge to sprint) - Right side: look - FIRE (drag it to aim) - AIM (aim down sights) - RELOAD - USE - LIGHT - BLINK - CROUCH - RUN - MAP - II pause.
 
 [b]CONTROLS (keyboard / mouse / gamepad)[/b]
-WASD move - Mouse look - LMB fire - R reload - E use - F flashlight - Space blink - Shift sprint - Ctrl/C crouch - M map - Esc pause."""
+WASD move - Mouse look - LMB fire - RMB / Q aim down sights - R reload - E use - F flashlight - Space blink - Shift sprint - Ctrl/C crouch - M map - Esc pause - F1 cheats.
+
+[b]CHEATS[/b]
+Pause menu > CHEATS: per-SCP ESP, god mode, infinite ammo / stamina / battery, no blinking."""
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	theme = UIKit.theme()
 	UIKit.dim_layer(self, 0.8)
 	var p := UIKit.center_panel(self, Vector2(1000, 640))

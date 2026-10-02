@@ -10,7 +10,7 @@ var _speed := 7.0
 var _seen_t := 0.0
 
 func _ready() -> void:
-	setup(get_tree().get_first_node_in_group("game"), "res://assets/models/npc/scp173.glb", 0.4, 2.1)
+	setup(get_tree().get_first_node_in_group("game"), "res://assets/models/npc/scp173.glb", 0.36, 1.9)
 	_speed = [5.5, 7.0, 8.8][Settings.difficulty] as float
 	_drag = Sfx.make_loop(self, "scp_173_stonedrag", -2.0, 22.0)
 	set_goal(global_position)
@@ -18,7 +18,7 @@ func _ready() -> void:
 func is_seen() -> bool:
 	var base := global_position
 	var right := global_transform.basis.x * 0.3
-	for p: Vector3 in [base + Vector3(0, 0.35, 0), base + Vector3(0, 1.1, 0), base + Vector3(0, 1.95, 0), base + right + Vector3(0, 1.1, 0), base - right + Vector3(0, 1.1, 0)]:
+	for p: Vector3 in [base + Vector3(0, 0.3, 0), base + Vector3(0, 1.0, 0), base + Vector3(0, 1.75, 0), base + right + Vector3(0, 1.0, 0), base - right + Vector3(0, 1.0, 0)]:
 		if player.can_see_point(p, 50.0):
 			return true
 	return false
@@ -44,7 +44,7 @@ func _physics_process(delta: float) -> void:
 	if hunting:
 		set_goal(player.global_position)
 		_moving = navigate(delta, _speed, 0, 7.0)
-		if d < 1.25:
+		if d < 1.2 and player.can_be_killed():
 			_kill()
 			return
 	else:

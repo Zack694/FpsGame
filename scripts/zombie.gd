@@ -14,7 +14,7 @@ var _wander := Vector3.ZERO
 var _col: CollisionShape3D
 
 func _ready() -> void:
-	setup(get_tree().get_first_node_in_group("game"), "res://assets/models/npc/zombie.glb", 0.35, 1.8)
+	setup(get_tree().get_first_node_in_group("game"), "res://assets/models/npc/zombie.glb", 0.33, 1.75)
 	add_to_group("shootable")
 	add_to_group("zombies")
 	_col = get_child(0) as CollisionShape3D
@@ -31,7 +31,7 @@ func _ready() -> void:
 		anim.seek(randf() * 3.0, true)
 
 func aim_point() -> Vector3:
-	return global_position + Vector3(0, 1.35, 0)
+	return global_position + Vector3(0, 1.3, 0)
 
 func _alerted() -> bool:
 	var d := dist_to_player()
@@ -81,7 +81,7 @@ func _physics_process(delta: float) -> void:
 func take_damage(amount: float, pos: Vector3, dir: Vector3) -> void:
 	if state == S.DEAD:
 		return
-	var head := pos.y - global_position.y > 1.42
+	var head := pos.y - global_position.y > 1.5
 	hp -= amount * (2.6 if head else 1.0)
 	if state == S.IDLE or state == S.LYING:
 		state = S.CHASE if state == S.IDLE else S.RISE
@@ -96,6 +96,7 @@ func _die() -> void:
 	velocity = Vector3.ZERO
 	play("death", false, 1.0, 0.1)
 	_breath.stop()
+	FX.blood_pool(get_tree().current_scene, global_position)
 	collision_layer = 0
 	collision_mask = 1
 	remove_from_group("actors")

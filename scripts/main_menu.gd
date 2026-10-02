@@ -8,21 +8,21 @@ var _menu: VBoxContainer
 func _ready() -> void:
 	get_tree().paused = false
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	theme = UIKit.theme()
 	var black := ColorRect.new()
 	black.color = Color.BLACK
-	black.set_anchors_preset(Control.PRESET_FULL_RECT)
+	black.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(black)
 	_bg = TextureRect.new()
 	_bg.texture = load("res://assets/textures/173back.jpg")
 	_bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_bg.modulate = Color(0.55, 0.55, 0.55)
 	add_child(_bg)
 	var grad := ColorRect.new()
-	grad.set_anchors_preset(Control.PRESET_FULL_RECT)
+	grad.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var sh := Shader.new()
 	sh.code = """shader_type canvas_item;
 void fragment() {
@@ -64,6 +64,7 @@ func _build_main() -> void:
 	_menu.add_child(UIKit.button("NEW GAME", _build_difficulty, 360))
 	_menu.add_child(UIKit.button("HOW TO PLAY", func() -> void: add_child(HowToPlay.new()), 360))
 	_menu.add_child(UIKit.button("SETTINGS", func() -> void: add_child(SettingsMenu.new()), 360))
+	_menu.add_child(UIKit.button("CHEATS", func() -> void: add_child(CheatsMenu.new()), 360))
 	_menu.add_child(UIKit.button("CREDITS", _show_credits, 360))
 	if not OS.has_feature("web"):
 		_menu.add_child(UIKit.button("QUIT", func() -> void: get_tree().quit(), 360))
@@ -92,7 +93,7 @@ func _start(d: int) -> void:
 	Sfx.play("door_bigdooropen", 0.0)
 	var fade := ColorRect.new()
 	fade.color = Color(0, 0, 0, 0)
-	fade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(fade)
 	var lbl := UIKit.label("LOADING SITE-19...", 26, UIKit.TEXT, HORIZONTAL_ALIGNMENT_CENTER)
 	lbl.set_anchors_preset(Control.PRESET_CENTER)
@@ -105,7 +106,8 @@ func _start(d: int) -> void:
 
 func _show_credits() -> void:
 	var c := Control.new()
-	c.set_anchors_preset(Control.PRESET_FULL_RECT)
+	c.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	c.theme = UIKit.theme()
 	UIKit.dim_layer(c, 0.85)
 	var p := UIKit.center_panel(c, Vector2(900, 560))
 	var v := VBoxContainer.new()
