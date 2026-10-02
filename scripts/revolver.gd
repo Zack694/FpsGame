@@ -32,7 +32,7 @@ func _ready() -> void:
 	_gun = Node3D.new()
 	add_child(_gun)
 	var steel := StandardMaterial3D.new()
-	steel.albedo_color = Color(0.16, 0.17, 0.19)
+	steel.albedo_color = Color(0.3, 0.31, 0.34)
 	steel.metallic = 0.85
 	steel.roughness = 0.28
 	var steel2 := StandardMaterial3D.new()
@@ -41,7 +41,7 @@ func _ready() -> void:
 	steel2.roughness = 0.4
 	var wood := StandardMaterial3D.new()
 	wood.albedo_texture = load("res://assets/textures/wood.jpg")
-	wood.albedo_color = Color(0.22, 0.11, 0.06)
+	wood.albedo_color = Color(0.3, 0.15, 0.08)
 	wood.roughness = 0.45
 	var brass := StandardMaterial3D.new()
 	brass.albedo_color = Color(0.8, 0.62, 0.25)
@@ -103,7 +103,7 @@ func _ready() -> void:
 	var vl := OmniLight3D.new()
 	vl.light_cull_mask = VIEW_LAYER
 	vl.light_color = Color(0.9, 0.92, 1.0)
-	vl.light_energy = 0.3
+	vl.light_energy = 0.6
 	vl.omni_range = 1.2
 	vl.position = Vector3(-0.15, 0.2, 0.1)
 	add_child(vl)

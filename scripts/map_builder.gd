@@ -176,13 +176,13 @@ func _make_materials() -> void:
 	_mats["concrete_floor"] = _mat("concretefloor", "concretefloorbump", 0.9, 0.0, Color(1.15, 1.15, 1.15))
 	_mats["white_wall"] = _mat("whitewall", "whitewallbump", 0.8)
 	_mats["ceiling"] = _mat("ceiling", "", 0.9, 0.0, Color(0.75, 0.75, 0.75))
-	_mats["dirty_metal"] = _mat("dirtymetal", "dirtymetalbump", 0.6, 0.4)
+	_mats["dirty_metal"] = _mat("dirtymetal", "dirtymetalbump", 0.65, 0.12, Color(1.2, 1.2, 1.2))
 	_mats["concrete_wall"] = _mat("concretewall", "concretewallbump", 0.9)
-	_mats["metal_panels"] = _mat("metalpanels", "", 0.55, 0.5)
-	_mats["metal_panels2"] = _mat("metalpanels2", "", 0.55, 0.5)
+	_mats["metal_panels"] = _mat("metalpanels", "", 0.6, 0.15, Color(1.5, 1.5, 1.5))
+	_mats["metal_panels2"] = _mat("metalpanels2", "", 0.6, 0.15, Color(1.3, 1.3, 1.3))
 	_mats["tile_floor"] = _mat("tilefloor", "tilebump", 0.35)
 	_mats["office_wall"] = _mat("officewall", "", 0.85)
-	_mats["metal_ceiling"] = _mat("metal", "", 0.6, 0.4, Color(0.7, 0.7, 0.7))
+	_mats["metal_ceiling"] = _mat("metal", "", 0.7, 0.1, Color(0.7, 0.7, 0.7))
 	var lamp := StandardMaterial3D.new()
 	lamp.albedo_color = Color(1, 0.97, 0.9)
 	lamp.emission_enabled = true
@@ -582,7 +582,7 @@ func _build_props() -> void:
 	server_face.emission = Color(1, 1, 1)
 	server_face.emission_energy_multiplier = 0.12
 	server_face.albedo_color = Color(0.55, 0.55, 0.58)
-	var rack_mat := _mat("metal", "", 0.45, 0.7, Color(0.18, 0.18, 0.2))
+	var rack_mat := _mat("metal", "", 0.5, 0.25, Color(0.35, 0.35, 0.38))
 	var console_mat := _mat("controlpanel", "", 0.5, 0.3)
 	console_mat.uv1_scale = Vector3(1.0, 0.5, 1)
 	console_mat.emission_enabled = true
